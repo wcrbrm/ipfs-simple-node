@@ -1,0 +1,12 @@
+version: '3'
+services:
+   ipfs_host:
+      image: ipfs/go-ipfs:latest
+      restart: "always"
+      ports:
+         - "4001:4001"
+         - "127.0.0.1:8080:8080"
+         - "127.0.0.1:5001:5001"
+      volumes:
+         - "./data/export:/export"
+         - "./data/ipfs:/data/ipfs"
