@@ -1,6 +1,6 @@
 version: '3'
 services:
-   ipfs_host:
+   ipfs:
       image: ipfs/go-ipfs:latest
       restart: "always"
       ports:
@@ -10,3 +10,33 @@ services:
       volumes:
          - "./data/export:/export"
          - "./data/ipfs:/data/ipfs"
+   prometheus:
+      image: prom/prometheus
+      volumes: 
+         - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      restart: "always"
+      links:
+         - ipfs
+      command: --web.external-url=http://localhost:5002/prometheus --web.route-prefix=/
+   # dashboard from https://gist.github.com/eefahy/52c3df180e67a2fc4520a7be1dc394b7
+   grafana:
+      image: grafana/grafana
+      restart: "always"
+      environment:
+         - GF_SERVER_ROOT_URL=http://localhost:5002/grafana
+         - GF_SECURITY_ADMIN_PASSWORD=ipfs
+      links:
+         - prometheus
+   front:
+      image: nginx:1.15.8-alpine
+      volumes:
+         - ./nginx/.passwd:/etc/nginx/.passwd
+         - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+         - ./nginx/index.html:/usr/share/nginx/html/index.html
+      ports:
+         - "127.0.0.1:5002:80"
+      links:
+         - prometheus
+         - grafana
+         - ipfs
+      restart: always
